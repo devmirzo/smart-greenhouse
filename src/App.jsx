@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Thermometer, Droplets, Sun, Wind, Cpu, Lock, Sprout, RefreshCw, FileText, Activity
 } from 'lucide-react';
@@ -55,7 +55,6 @@ function SensorCard({ icon: Icon, label, value, unit, color, series, categories,
       className="bg-[#0d1423] rounded-2xl border border-slate-800 p-4 flex flex-col gap-3 shadow-lg"
       style={{ boxShadow: `0 0 24px ${color}18` }}
     >
-      {/* Yuqori qator: ikonka + qiymat */}
       <div className="flex items-start justify-between">
         <div>
           <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">{label}</p>
@@ -74,8 +73,6 @@ function SensorCard({ icon: Icon, label, value, unit, color, series, categories,
           <Icon size={18} />
         </div>
       </div>
-
-      {/* Grafik */}
       <div className="w-full" style={{ height: 80 }}>
         <Chart
           options={options}
@@ -102,7 +99,6 @@ export default function App() {
   const [logs, setLogs] = useState([]);
   const [rawLogData, setRawLogData] = useState([]);
 
-  // Har bir ko'rsatkich uchun alohida tarix
   const [history, setHistory] = useState({
     categories: [],
     temperature: [],
@@ -114,12 +110,12 @@ export default function App() {
 
   const [isExporting, setIsExporting] = useState(false);
 
-  const addLog = (message) => {
+  const addLog = useCallback((message) => {
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     setLogs(prev => [`[${time}] ${message}`, ...prev.slice(0, 4)]);
-  };
+  }, []);
 
-  const fetchChartHistory = async () => {
+  const fetchChartHistory = useCallback(async () => {
     const { data } = await supabase
       .from('sensor_logs')
       .select('*')
@@ -138,9 +134,9 @@ export default function App() {
         gas_level:     rev.map(d => d.gas_level      ?? 0),
       });
     }
-  };
+  }, []);
 
-  const fetchAllData = async () => {
+  const fetchAllData = useCallback(async () => {
     const { data: logData } = await supabase
       .from('sensor_logs').select('*').order('id', { ascending: false }).limit(1);
     if (logData?.length) setClimate(logData[0]);
@@ -154,9 +150,9 @@ export default function App() {
 
     await fetchChartHistory();
     addLog("✅ Barcha ko'rsatkichlar yangilandi.");
-  };
+  }, [fetchChartHistory, addLog]);
 
-  const setupRealtime = () => {
+  const setupRealtime = useCallback(() => {
     supabase.channel('settings-changes')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'device_settings', filter: 'id=eq.1' }, payload => {
         setSettings(payload.new);
@@ -170,7 +166,7 @@ export default function App() {
         addLog(`⚡ Yangi o'lchov: ${payload.new.temperature}°C`);
         fetchChartHistory();
       }).subscribe();
-  };
+  }, [addLog, fetchChartHistory]);
 
   useEffect(() => {
     const init = async () => {
@@ -196,7 +192,7 @@ export default function App() {
       await fetchAllData(); setupRealtime();
     };
     init();
-  }, []);
+  }, [fetchAllData, setupRealtime]);
 
   // ── PDF eksport ──────────────────────────────────────────────────────────────
   const exportToPDF = () => {
@@ -232,7 +228,7 @@ export default function App() {
       ]);
       doc.autoTable({
         startY: 120,
-        head: [['#', 'Vaqt', 'Harorat', 'Havo Nam.', 'Tuproq Nam.', "Yorug'lik", 'Gaz (ppm)']],
+        head: [["#", "Vaqt", "Harorat", "Havo Nam.", "Tuproq Nam.", "Yorug'lik", "Gaz (ppm)"]],
         body: tableRows, theme: 'striped',
         headStyles: { fillColor: [79, 70, 229] },
         styles: { fontSize: 9, font: "Helvetica" }
@@ -243,7 +239,6 @@ export default function App() {
     finally { setIsExporting(false); }
   };
 
-  // ── Loading ──────────────────────────────────────────────────────────────────
   if (authState.isLoading) return (
     <div className="min-h-screen bg-[#070b13] flex flex-col items-center justify-center text-slate-400 font-mono text-xs gap-3">
       <RefreshCw size={24} className="animate-spin text-indigo-500" />
@@ -251,21 +246,19 @@ export default function App() {
     </div>
   );
 
-  // ── Kirish rad ───────────────────────────────────────────────────────────────
   if (!authState.isAllowed) return (
     <div className="min-h-screen bg-[#070b13] flex flex-col items-center justify-center text-slate-400 p-6 text-center gap-4">
       <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-full"><Lock size={32} /></div>
       <h2 className="text-white font-bold text-lg">Kirish Rad Etildi</h2>
       <p className="text-xs text-slate-500 font-mono">Telegram ID orqali ruxsat topilmadi.</p>
+      <p className="text-xs text-slate-600 font-mono">Telegram ID: {window.Telegram?.WebApp?.initDataUnsafe?.user?.id ?? 'Aniqlanmadi'}</p>
     </div>
   );
 
-  // ── Asosiy sahifa ────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#070b13] text-slate-100 p-4 font-sans pb-12">
       <div className="max-w-6xl mx-auto space-y-4">
 
-        {/* ── Header ── */}
         <header className="flex justify-between items-center bg-[#0d1423] p-4 rounded-2xl border border-slate-800 shadow-2xl">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-400">
@@ -284,11 +277,10 @@ export default function App() {
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white font-mono text-[11px] font-bold px-3 py-2 rounded-xl transition-all"
           >
             <FileText size={14} />
-            {isExporting ? 'Eksport...' : 'PDF Yuklash'}
+            {isExporting ? 'Eksport...': 'PDF Yuklash'}
           </button>
         </header>
 
-        {/* ── 5 ta sensor kartasi + alohida grafiklar ── */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
           <SensorCard
             icon={Thermometer} label="Havo Harorati"
@@ -322,10 +314,7 @@ export default function App() {
           />
         </section>
 
-        {/* ── Aktuatorlar + Loglar ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-          {/* Aktuatorlar */}
           <section className="bg-[#0d1423] p-4 rounded-2xl border border-slate-800 shadow-xl flex flex-col gap-4">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-800 pb-2">
               Aktuatorlar Statusi
@@ -333,8 +322,6 @@ export default function App() {
             <p className="text-[10px] text-slate-600 leading-relaxed">
               Telegram bot buyruqlari yoki avtomatika asosida boshqariladi. Faqat kuzatish.
             </p>
-
-            {/* Kuller */}
             <div className={`p-3 rounded-xl border flex justify-between items-center transition-all duration-500 ${
               deviceState.cooler_status
                 ? 'bg-orange-500/10 border-orange-500/30'
@@ -350,8 +337,6 @@ export default function App() {
                 {deviceState.cooler_status ? 'YOQILGAN' : "O'CHIRILGAN"}
               </span>
             </div>
-
-            {/* Nasos */}
             <div className={`p-3 rounded-xl border flex justify-between items-center transition-all duration-500 ${
               deviceState.pump_status
                 ? 'bg-emerald-500/10 border-emerald-500/30'
@@ -369,7 +354,6 @@ export default function App() {
             </div>
           </section>
 
-          {/* Loglar */}
           <section className="bg-[#0d1423] p-4 rounded-2xl border border-slate-800 shadow-inner lg:col-span-2 flex flex-col gap-3">
             <h4 className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2 flex items-center gap-2">
               <Activity size={12} className="text-indigo-400" />
@@ -386,7 +370,6 @@ export default function App() {
               }
             </div>
           </section>
-
         </div>
       </div>
     </div>
