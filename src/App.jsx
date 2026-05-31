@@ -341,7 +341,7 @@ export default function App() {
                 : 'bg-slate-900/40 border-slate-800'
             }`}>
               <div className="flex items-center gap-2">
-                <Wind size={14} className={deviceState.cooler_status ? 'animate-spin text-orange-400' : 'text-slate-600'} />
+                <Wind size={14} className={deviceState.cooler_status ? 'animate-pulse text-orange-400' : 'text-slate-600'} />
                 <span className={`text-[11px] font-mono ${deviceState.cooler_status ? 'text-orange-400 font-bold' : 'text-slate-500'}`}>
                   Havo Kuller
                 </span>
