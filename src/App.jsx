@@ -237,16 +237,18 @@ export default function App() {
     </div>
   );
 
-  if (!authState.isAllowed) return (
-    <div className="min-h-screen bg-[#070b13] flex flex-col items-center justify-center text-slate-400 p-6 text-center gap-4">
-      <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-full"><Lock size={32} /></div>
-      <h2 className="text-white font-bold text-lg">Kirish Rad Etildi</h2>
-      <p className="text-xs text-slate-500 font-mono">Telegram ID orqali ruxsat topilmadi.</p>
-      <p className="text-xs text-slate-700 font-mono">
-        ID: {window.Telegram?.WebApp?.initDataUnsafe?.user?.id ?? 'Aniqlanmadi'}
-      </p>
+if (!authState.isAllowed) return (
+  <div className="min-h-screen bg-[#070b13] flex flex-col items-center justify-center text-slate-400 p-6 text-center gap-4">
+    <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-full"><Lock size={32} /></div>
+    <h2 className="text-white font-bold text-lg">Kirish Rad Etildi</h2>
+    <p className="text-xs text-slate-500 font-mono">Telegram ID orqali ruxsat topilmadi.</p>
+    <div className="text-left bg-slate-900 p-3 rounded-xl text-[10px] font-mono text-slate-400 w-full max-w-xs space-y-1">
+      <p>WebApp: {window.Telegram?.WebApp ? '✅' : '❌'}</p>
+      <p>initData: {window.Telegram?.WebApp?.initData ? '✅' : '❌'}</p>
+      <p>user: {JSON.stringify(window.Telegram?.WebApp?.initDataUnsafe?.user ?? 'null')}</p>
     </div>
-  );
+  </div>
+);
 
   return (
     <div className="min-h-screen bg-[#070b13] text-slate-100 p-4 font-sans pb-12">
