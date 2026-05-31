@@ -246,7 +246,7 @@ export default function App() {
     </div>
   );
 
-  if (!authState.isAllowed) return (
+  if (authState.isAllowed) return (
     <div className="min-h-screen bg-[#070b13] flex flex-col items-center justify-center text-slate-400 p-6 text-center gap-4">
       <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-full"><Lock size={32} /></div>
       <h2 className="text-white font-bold text-lg">Kirish Rad Etildi</h2>
